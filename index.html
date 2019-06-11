@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Stateful WASM</title>
+  <style>
+    #results {
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div id="results">
+    no results...
+  </div>
+  <button disabled data-action="CREATE">
+    Dispatch Create
+  </button>
+  <button disabled data-action="READ">
+    Dispatch Read
+  </button>
+  <button disabled data-action="UPDATE">
+    Dispatch Update
+  </button>
+  <button disabled data-action="DELETE">
+    Dispatch delete
+  </button>
+  <script src="index.bundle.js"></script>
+</body>
+</html>
