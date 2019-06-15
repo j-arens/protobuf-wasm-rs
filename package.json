@@ -1,15 +1,22 @@
 {
   "name": "stateful-wasm",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.bundle.js",
   "author": "Josh Arens",
   "license": "MIT",
   "scripts": {
-    "proto:build": "npx pbjs -t static-module -w commonjs --es6 -o $(pwd)/src/proto/generated.js $(pwd)/src/proto/*.proto",
+    "build": "NODE_ENV=production yarn protojs && yarn wasm:release",
+    "protojs": "yarn protojs:build && yarn protojs:types",
+    "protojs:build": "npx pbjs -t static-module -w commonjs --es6 -o ./src/proto/generated.js ./src/proto/*.proto",
+    "protojs:types": "npx pbts -o ./src/proto/generated.d.ts ./src/proto/generated.js",
     "wasm:build": "cargo build --target wasm32-unknown-unknown",
-    "start": "webpack-dev-server"
+    "wasm:release": "yarn wasm:build --release",
+    "start": "NODE_ENV=development webpack-dev-server"
   },
   "devDependencies": {
+    "@types/webassembly-web-api": "^0.0.2",
+    "ts-loader": "^6.0.2",
+    "typescript": "^3.5.2",
     "webpack": "^4.33.0",
     "webpack-cli": "^3.3.3",
     "webpack-dev-server": "^3.7.1"
