@@ -10,5 +10,5 @@ enum ActionType {
 }
 
 message Action {
-  ActionType type = 1;
+  ActionType payload = 1;
 }

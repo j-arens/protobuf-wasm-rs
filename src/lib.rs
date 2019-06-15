@@ -1,33 +1,73 @@
 use std::mem;
-use std::os::raw::c_void;
+use std::alloc;
+use std::slice;
+use std::panic;
 
-use protobuf::parse_from_bytes;
+use protobuf::{parse_from_bytes, Message};
 
 mod proto;
-use proto::Action::Action;
-use proto::Action::ActionType;
+use proto::Action::{Action, ActionType};
+use proto::State::State;
 
-#[no_mangle]
-pub extern "C" fn alloc(size: usize) -> *mut c_void {
-  let mut buffer = Vec::with_capacity(size);
-  let pointer = buffer.as_mut_ptr();
-  mem::forget(buffer);
-  pointer
+extern {
+  fn push_byte(byte: u8);
+}
+
+fn proto_from_bytes<T>(ptr: *mut u8, size: usize) -> T
+  where T: Message
+{
+  let slice: &[u8] = unsafe { slice::from_raw_parts(ptr, size) };
+  parse_from_bytes::<T>(slice).unwrap()
+}
+
+fn set_mode(a_type: ActionType, state: &mut State) {
+  match a_type {
+    ActionType::CREATE => state.set_mode(0),
+    ActionType::READ => state.set_mode(1),
+    ActionType::UPDATE => state.set_mode(2),
+    ActionType::DELETE => state.set_mode(3),
+  }
 }
 
 #[no_mangle]
-pub extern "C" fn dealloc(pointer: *mut c_void, offset: usize) {
-  unsafe { let _ = Vec::from_raw_parts(pointer, 0, offset); }
+pub extern fn compute_state(a_ptr: *mut u8, a_size: usize, s_ptr: *mut u8, s_size: usize) {
+  let action = proto_from_bytes::<Action>(a_ptr, a_size);
+  let mut state = proto_from_bytes::<State>(s_ptr, s_size);
+  set_mode(action.get_payload(), &mut state);
+  let bytes = state.write_to_bytes().unwrap();
+  for byte in bytes.iter() {
+    unsafe { push_byte(*byte) };
+  }
 }
 
+// borrowed from wasm-bindgen
 #[no_mangle]
-pub extern fn read_action(pointer: *const u8, offset: usize) -> i32 {
-  let slice: &[u8] = unsafe { std::slice::from_raw_parts(pointer, offset) };
-  let action: Action = parse_from_bytes(slice).unwrap();
-  match action.get_field_type() {
-    ActionType::CREATE => 10,
-    ActionType::READ => 11,
-    ActionType::UPDATE => 12,
-    ActionType::DELETE => 13,
+pub extern "C" fn alloc(size: usize) -> *mut u8 {
+  let align = mem::align_of::<usize>();
+  unsafe {
+    if let Ok(layout) = alloc::Layout::from_size_align(size, align) {
+      if layout.size() > 0 {
+        let ptr = alloc::alloc(layout);
+        if !ptr.is_null() {
+          return ptr
+        }
+      } else {
+        return align as *mut u8
+      }
+    }
+  }
+  panic!("alloc failure");
+}
+
+// borrowed from wasm-bindgen
+#[no_mangle]
+pub extern "C" fn free(ptr: *mut u8, size: usize) {
+  if size == 0 {
+    return
+  }
+  let align = mem::align_of::<usize>();
+  unsafe {
+    let layout = alloc::Layout::from_size_align_unchecked(size, align);
+    alloc::dealloc(ptr, layout);
   }
 }

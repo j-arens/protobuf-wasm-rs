@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "es6",
+      "es2017"
+    ],
+    "target": "es6",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "downlevelIteration": true
+  },
+  "exclude": ["node_modules"]
+}
